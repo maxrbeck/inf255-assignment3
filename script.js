@@ -168,21 +168,16 @@ function updateDisplay() {
 // ------------------------------------
 
 function updateCount() {
-	/*
-	 * TODO #4: Show how many animals are still available.
-	 *
-	 * 1. Select the #animal-count paragraph.
-	 * 2. Use filter() on the full animals array (not just the visible
-	 *    cards) to find the animals that are not adopted.
-	 * 3. Set the paragraph's textContent to a message like:
-	 *
-	 *      4 of 8 animals are available for adoption.
-	 *
-	 *    Calculate both numbers. Do not type 4 or 8 directly.
-	 *
-	 * Note: When this TODO is complete, the message appears when the page
-	 * opens and changes every time an animal is adopted or returned.
-	 */
+	const countText = document.querySelector("#animal-count");
+
+	// Count from the full animals array, not the filtered cards, so the
+	// numbers describe the whole shelter. That way filtering or sorting
+	// never changes the message; only adopting or returning does.
+	const availableAnimals = animals.filter(function (animal) {
+		return !animal.adopted;
+	});
+
+	countText.textContent = `${availableAnimals.length} of ${animals.length} animals are available for adoption.`;
 }
 
 // ------------------------------------
@@ -194,19 +189,31 @@ const availableButton = document.querySelector("#show-available");
 const adoptedButton = document.querySelector("#show-adopted");
 const sortSelect = document.querySelector("#sort-animals");
 
-/*
- * TODO #5: Connect the controls to updateDisplay().
- *
- * Add click listeners to the three filter buttons. Each callback should set
- * activeFilter to "all", "available", or "adopted", then call
- * updateDisplay().
- *
- * Add a change listener to sortSelect. Its callback should copy
- * sortSelect.value into activeSort, then call updateDisplay().
- *
- * Note: When this TODO is complete, every part of the app should work.
- * Go back and test the filter and sort code you wrote in TODO #3.
- */
+// The controls never touch the cards directly. Each one just records what
+// the user picked in activeFilter or activeSort, then asks updateDisplay()
+// to rebuild the list. Keeping that choice in a variable is what lets the
+// filter and sort stay in place after an animal is adopted or returned.
+allButton.addEventListener("click", function () {
+	activeFilter = "all";
+	updateDisplay();
+});
+
+availableButton.addEventListener("click", function () {
+	activeFilter = "available";
+	updateDisplay();
+});
+
+adoptedButton.addEventListener("click", function () {
+	activeFilter = "adopted";
+	updateDisplay();
+});
+
+// "change" fires once the user picks a new option. The option values in
+// index.html ("default", "name", "age") match what updateDisplay() checks.
+sortSelect.addEventListener("change", function () {
+	activeSort = sortSelect.value;
+	updateDisplay();
+});
 
 // Display the original list and the count when the page first opens.
 displayAnimals(animals);
