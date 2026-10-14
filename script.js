@@ -12,8 +12,12 @@
  * EXTRA CREDIT: If you build any extra credit features, list them here
  * (see README.md). Features that are not listed here will not be graded.
  *
- *   -
- *   -
+ *   - Name search: a search box (#search-name) that narrows the cards to
+ *     names containing the typed text, ignoring case, as the user types.
+ *   - Species filter: a menu (#filter-species) for All species, Dogs, Cats,
+ *     and Rabbits that combines with the Available/Adopted filter.
+ *   - Remove button: each card has a Remove button that deletes that animal
+ *     from the data, and the count updates to match.
  */
 
 // ------------------------------------
@@ -34,6 +38,11 @@ const animals = [
 // What the user currently wants to see. The page controls change these.
 let activeFilter = "all";
 let activeSort = "default";
+
+// Extra credit: the species menu and search box save their choices here,
+// the same way the filter buttons use activeFilter.
+let activeSpecies = "all";
+let searchText = "";
 
 // ------------------------------------
 // Display Animals
@@ -91,7 +100,17 @@ function displayAnimals(animalArray) {
 			toggleAdoption(animal.id);
 		});
 
-		card.append(nameHeading, speciesText, ageText, statusText, button);
+		// Extra credit: Remove button. Like the Adopt/Return button, its
+		// callback is a closure that remembers this card's animal, so it
+		// passes the right id to removeAnimal() when clicked.
+		const removeButton = document.createElement("button");
+		removeButton.type = "button";
+		removeButton.textContent = "Remove";
+		removeButton.addEventListener("click", function () {
+			removeAnimal(animal.id);
+		});
+
+		card.append(nameHeading, speciesText, ageText, statusText, button, removeButton);
 		animalList.appendChild(card);
 	});
 }
@@ -122,6 +141,31 @@ function toggleAdoption(animalId) {
 }
 
 // ------------------------------------
+// Extra Credit: Remove an Animal
+// ------------------------------------
+
+function removeAnimal(animalId) {
+	// animals is a const, so I can't assign a filtered array back to it.
+	// Instead I find the animal's position and use splice() to take it out
+	// of the real array, which every other function reads from.
+	const index = animals.findIndex(function (a) {
+		return a.id === animalId;
+	});
+
+	// findIndex() returns -1 when nothing matches, and splice(-1, 1) would
+	// wrongly delete the last animal, so stop here instead.
+	if (index === -1) {
+		return;
+	}
+
+	animals.splice(index, 1);
+
+	// updateDisplay() also calls updateCount(), so both the cards and the
+	// "X of Y" message reflect the smaller shelter right away.
+	updateDisplay();
+}
+
+// ------------------------------------
 // Filter, Sort, and Update
 // ------------------------------------
 
@@ -142,6 +186,23 @@ function updateDisplay() {
 	} else if (activeFilter === "adopted") {
 		visibleAnimals = visibleAnimals.filter(function (animal) {
 			return animal.adopted === true;
+		});
+	}
+
+	// Extra credit: species filter. It runs on whatever the availability
+	// filter left behind, so the two stack (e.g. Available + Dogs).
+	if (activeSpecies !== "all") {
+		visibleAnimals = visibleAnimals.filter(function (animal) {
+			return animal.species === activeSpecies;
+		});
+	}
+
+	// Extra credit: name search. Both sides are lowercased so "lu", "LU",
+	// and "Lu" all match Luna. An empty search box matches every name
+	// because every string includes "", so this is skipped in that case.
+	if (searchText !== "") {
+		visibleAnimals = visibleAnimals.filter(function (animal) {
+			return animal.name.toLowerCase().includes(searchText);
 		});
 	}
 
@@ -212,6 +273,24 @@ adoptedButton.addEventListener("click", function () {
 // index.html ("default", "name", "age") match what updateDisplay() checks.
 sortSelect.addEventListener("change", function () {
 	activeSort = sortSelect.value;
+	updateDisplay();
+});
+
+// Extra credit controls. These follow the same pattern as above: save the
+// user's choice, then let updateDisplay() combine it with everything else.
+const speciesSelect = document.querySelector("#filter-species");
+const searchInput = document.querySelector("#search-name");
+
+speciesSelect.addEventListener("change", function () {
+	activeSpecies = speciesSelect.value;
+	updateDisplay();
+});
+
+// "input" fires on every keystroke (and when the box is cleared), so the
+// cards update live while typing instead of waiting for Enter. trim() keeps
+// a stray space from hiding every card.
+searchInput.addEventListener("input", function () {
+	searchText = searchInput.value.trim().toLowerCase();
 	updateDisplay();
 });
 
